@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Litter Detectives Debris Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a one-column field notebook for a phone in the sun — big tap targets,
+   survey-tape orange for the one action that matters, sea-teal ink for everything else. */
+:root{
+  --bg:#eaf1f0;
+  --surface:#ffffff;
+  --ink:#0f2a2e;
+  --muted:#557073;
+  --line:#cfdcda;
+  --accent:#d9480f;
+  --accent-ink:#ffffff;
+  --sea:#0b6e69;
+  --chip:#f3f7f6;
+  --warn-bg:#fff4e0;
+  --warn-ink:#7a4a00;
+  --m-plastic:#1f6fbf;
+  --m-metal:#6b7884;
+  --m-glass:#1c9a8f;
+  --m-rubber:#6a4c9c;
+  --m-wood:#9a6227;
+  --m-fabric:#c43f72;
+  --m-other:#9c8a1c;
+  --t1:#d9480f; --t2:#0b6e69; --t3:#6a4c9c; --t4:#9c8a1c;
+  --font-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a1719; --surface:#11262a; --ink:#e4efed; --muted:#93aead; --line:#25423f;
+    --accent:#ff7a33; --accent-ink:#1a0d05; --sea:#4cc2b8; --chip:#173236;
+    --warn-bg:#3a2a10; --warn-ink:#ffd59a;
+    --m-plastic:#5aa5ef; --m-metal:#a3b0bc; --m-glass:#4fd0c3; --m-rubber:#a98ae0;
+    --m-wood:#d79a5c; --m-fabric:#f07aa6; --m-other:#d8c552;
+    --t1:#ff7a33; --t2:#4cc2b8; --t3:#a98ae0; --t4:#d8c552;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a1719; --surface:#11262a; --ink:#e4efed; --muted:#93aead; --line:#25423f;
+  --accent:#ff7a33; --accent-ink:#1a0d05; --sea:#4cc2b8; --chip:#173236;
+  --warn-bg:#3a2a10; --warn-ink:#ffd59a;
+  --m-plastic:#5aa5ef; --m-metal:#a3b0bc; --m-glass:#4fd0c3; --m-rubber:#a98ae0;
+  --m-wood:#d79a5c; --m-fabric:#f07aa6; --m-other:#d8c552;
+  --t1:#ff7a33; --t2:#4cc2b8; --t3:#a98ae0; --t4:#d8c552;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.15}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 96px}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-inner{max-width:720px;margin:0 auto;padding:12px 16px 0;display:grid;gap:10px}
+.brandrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brandrow h1{font-size:1.35rem;font-weight:800;letter-spacing:-.01em}
+.brandrow h1 span{color:var(--accent)}
+.survey-chip{font-size:.82rem;color:var(--muted);text-align:right}
+.survey-chip strong{color:var(--ink);font-size:1.1rem;display:block}
+nav.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 4px 9px;font-weight:700;color:var(--muted);cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+.banner{margin:14px 0 0;padding:12px 14px;border-radius:10px;background:var(--warn-bg);color:var(--warn-ink);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:.92rem}
+.banner button{flex:none}
+
+section.view{display:none;padding-top:18px}
+section.view.active{display:grid;gap:22px}
+.step{display:grid;gap:10px}
+.step-head{display:flex;align-items:baseline;gap:10px}
+.step-no{font-family:var(--font-display);font-weight:800;color:var(--accent);font-size:1rem;min-width:1.4em}
+.step-head h2{font-size:1.1rem}
+.step-head .hint{color:var(--muted);font-size:.85rem;margin-left:auto}
+
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tile{display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);cursor:pointer;text-align:left;font-weight:700}
+.tile .sw{width:14px;height:14px;border-radius:4px;flex:none}
+.tile .ct{margin-left:auto;font-size:.85rem;color:var(--muted);font-weight:400}
+.tile[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:9px 14px;border-radius:999px;border:2px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.empty-note{color:var(--muted);font-size:.92rem;padding:4px 0}
+
+.src-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.src{display:grid;gap:2px;padding:10px 12px;min-height:64px;border-radius:12px;border:2px solid var(--line);background:var(--surface);cursor:pointer;text-align:left}
+.src b{font-size:1rem}
+.src small{color:var(--muted);font-size:.8rem;line-height:1.3}
+.src[aria-pressed="true"]{border-color:var(--sea);box-shadow:inset 0 0 0 1px var(--sea)}
+
+details.more{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+details.more summary{padding:12px 14px;cursor:pointer;font-weight:700;list-style-position:inside}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 14px}
+.field{display:grid;gap:4px}
+.field label{font-size:.82rem;color:var(--muted);font-weight:700}
+.field input,.field select,.field textarea{width:100%;min-height:44px;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line);background:var(--bg)}
+.field.full{grid-column:1/-1}
+@media (max-width:420px){.fields{grid-template-columns:1fr}}
+
+.actionbar{position:sticky;bottom:0;z-index:15;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:14px 0 16px;display:grid;grid-template-columns:1fr auto;gap:8px}
+.btn{min-height:48px;padding:10px 18px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-weight:700;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:1.08rem}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.sea{background:var(--sea);border-color:var(--sea);color:var(--bg)}
+.btn.small{min-height:38px;padding:6px 12px;font-size:.9rem;border-radius:9px}
+.btn.danger{color:var(--accent);border-color:currentColor;background:transparent}
+.selection-summary{font-size:.9rem;color:var(--muted);grid-column:1/-1;min-height:1.3em}
+.selection-summary b{color:var(--ink)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.card h3{font-size:1.02rem}
+.card .sub{color:var(--muted);font-size:.85rem;margin:-6px 0 0}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:560px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat .v{font-family:var(--font-display);font-weight:800;font-size:1.6rem;line-height:1.1}
+.stat .l{font-size:.8rem;color:var(--muted)}
+.stat .v.text{font-size:1.1rem;padding-top:6px}
+
+.bars{display:grid;gap:8px}
+.bar-row{display:grid;grid-template-columns:minmax(90px,30%) 1fr auto;gap:10px;align-items:center;font-size:.92rem}
+.bar-track{height:14px;border-radius:7px;background:var(--chip);overflow:hidden}
+.bar-fill{display:block;height:100%;border-radius:7px}
+.bar-val{min-width:5.5em;text-align:right;color:var(--muted)}
+.bar-val b{color:var(--ink)}
+.group{display:grid;gap:4px;padding:6px 0;border-top:1px solid var(--line)}
+.group:first-child{border-top:0}
+.group-label{font-weight:700;font-size:.92rem}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:700;font-size:.8rem;border-top:0}
+td.r,th.r{text-align:right}
+.tablewrap{overflow-x:auto}
+.log-list{display:grid;gap:0}
+.log-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:.92rem}
+.log-item:first-child{border-top:0}
+.log-item .sw{width:10px;height:28px;border-radius:3px}
+.log-item .meta{color:var(--muted);font-size:.8rem}
+.iconbtn{border:0;background:none;color:var(--muted);cursor:pointer;padding:8px;border-radius:8px;font-weight:700}
+.iconbtn:hover{color:var(--accent)}
+
+textarea.code{width:100%;min-height:84px;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;word-break:break-all;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.ds-list{display:grid;gap:6px}
+.ds{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--chip);font-size:.92rem}
+.ds i{width:12px;height:12px;border-radius:3px;flex:none}
+.ds .grow{flex:1}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:.92rem}
+.toast[hidden]{display:none}
+.toast button{background:transparent;border:1.5px solid var(--bg);color:var(--bg);border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer}
+.modal-back{position:fixed;inset:0;z-index:60;background:rgba(5,15,17,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-back[hidden]{display:none}
+.modal{background:var(--surface);border-radius:16px;padding:20px;max-width:420px;width:100%;display:grid;gap:12px}
+.modal p{margin:0;color:var(--muted)}
+.modal .row{justify-content:flex-end}
+.foot{color:var(--muted);font-size:.8rem;padding-top:8px}
+@media (prefers-reduced-motion: no-preference){
+  .bar-fill{transition:width .35s ease}
+  .tile,.chip,.src{transition:border-color .15s, background-color .15s}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brandrow">
+      <h1>Litter <span>Detectives</span></h1>
+      <div class="survey-chip" id="surveyChip"></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="tab-log" data-view="log" aria-selected="true">Log</button>
+      <button role="tab" id="tab-tally" data-view="tally" aria-selected="false">Tally</button>
+      <button role="tab" id="tab-compare" data-view="compare" aria-selected="false">Compare</button>
+      <button role="tab" id="tab-setup" data-view="setup" aria-selected="false">Setup</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="demoBanner" class="banner" hidden>
+    <span>You're looking at <b>example data</b>. Start a new survey before the field day.</span>
+    <button class="btn small" data-go="setup">Go to Setup</button>
+  </div>
+  <div id="storageBanner" class="banner" hidden>
+    <span>This browser isn't saving the log. Copy your backup code from Setup every few items.</span>
+  </div>
+
+  <!-- LOG -->
+  <section class="view active" id="view-log" role="tabpanel" aria-labelledby="tab-log">
+    <div class="step">
+      <div class="step-head"><span class="step-no">1</span><h2>What is it mainly made of?</h2><span class="hint">Main surface material</span></div>
+      <div class="mat-grid" id="matGrid"></div>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="step-no">2</span><h2>What is the item?</h2></div>
+      <div class="chips" id="itemChips"></div>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="step-no">3</span><h2>Where did it most likely come from?</h2><span class="hint">Agree as a team</span></div>
+      <div class="src-grid" id="srcGrid"></div>
+    </div>
+    <details class="more" id="moreDetails">
+      <summary>Brand, country and notes (optional)</summary>
+      <div class="fields">
+        <div class="field"><label for="fBrand">Brand on packaging</label><input id="fBrand" autocomplete="off" placeholder="e.g. Al Ain"></div>
+        <div class="field"><label for="fCountry">Country of origin</label><input id="fCountry" autocomplete="off" placeholder="e.g. Bahrain"></div>
+        <div class="field"><label for="fPhoto">Photo number</label><input id="fPhoto" autocomplete="off" inputmode="numeric" placeholder="e.g. 14"></div>
+        <div class="field"><label for="fNotes">Notes</label><input id="fNotes" autocomplete="off" placeholder="Size, condition, anything odd"></div>
+      </div>
+    </details>
+    <div class="actionbar">
+      <div class="selection-summary" id="selSummary"></div>
+      <button class="btn primary" id="logBtn" disabled>Log item</button>
+      <button class="btn" id="repeatBtn" title="Log another item exactly like the last one">+1 same again</button>
+    </div>
+    <div class="card">
+      <h3>Last items logged</h3>
+      <div class="log-list" id="recentList"></div>
+    </div>
+  </section>
+
+  <!-- TALLY -->
+  <section class="view" id="view-tally" role="tabpanel" aria-labelledby="tab-tally">
+    <div class="tiles" id="tallyTiles"></div>
+    <div class="card">
+      <h3>By material</h3>
+      <p class="sub">Categories follow NOAA's Marine Debris Monitoring and Assessment Project.</p>
+      <div class="bars" id="matBars"></div>
+    </div>
+    <div class="card">
+      <h3>By likely source</h3>
+      <div class="bars" id="srcBars"></div>
+    </div>
+    <div class="card">
+      <h3>Top 8 items</h3>
+      <div class="bars" id="itemBars"></div>
+    </div>
+    <div class="card">
+      <h3>Brand audit</h3>
+      <div class="tablewrap" id="brandTable"></div>
+    </div>
+    <div class="card">
+      <h3>Full log</h3>
+      <p class="sub">Tap ✕ to remove an item logged by mistake.</p>
+      <div class="log-list" id="fullList"></div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="view" id="view-compare" role="tabpanel" aria-labelledby="tab-compare">
+    <div class="card">
+      <h3>1. Share your team's results</h3>
+      <p class="sub">Copy this code and send it to the other team, or to the staff device.</p>
+      <textarea class="code" id="myCode" readonly aria-label="Your team's share code"></textarea>
+      <div class="row"><button class="btn sea small" id="copyMyCode">Copy code</button><span class="small muted" id="copyMsg"></span></div>
+    </div>
+    <div class="card">
+      <h3>2. Add another team's results</h3>
+      <p class="sub">Paste a code from another team's device.</p>
+      <textarea class="code" id="pasteCode" aria-label="Paste another team's code" placeholder="LD1:…"></textarea>
+      <div class="row"><button class="btn sea small" id="mergeBtn">Add results</button><span class="small muted" id="mergeMsg" role="status"></span></div>
+      <div class="ds-list" id="dsList"></div>
+    </div>
+    <div class="tiles" id="cmpTiles"></div>
+    <div class="card">
+      <h3>Material by team</h3>
+      <p class="sub">Share of each team's own total, so teams that found more litter compare fairly.</p>
+      <div class="legend" id="cmpLegend1"></div>
+      <div id="cmpMat"></div>
+    </div>
+    <div class="card">
+      <h3>Likely source by team</h3>
+      <div class="legend" id="cmpLegend2"></div>
+      <div id="cmpSrc"></div>
+    </div>
+    <div class="card">
+      <h3>Export for Day 4 analysis</h3>
+      <p class="sub">One row per item, for every team listed above.</p>
+      <div class="row">
+        <button class="btn small" id="dlCsv" hidden>Download CSV</button>
+        <button class="btn small" id="copyCsv">Copy CSV</button>
+        <span class="small muted" id="csvMsg" role="status"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="view" id="view-setup" role="tabpanel" aria-labelledby="tab-setup">
+    <div class="card">
+      <h3>Survey details</h3>
+      <div class="fields" style="padding:0">
+        <div class="field"><label for="sTeam">Team</label><input id="sTeam" autocomplete="off" placeholder="Team A"></div>
+        <div class="field"><label for="sSite">Site</label><input id="sSite" autocomplete="off" placeholder="e.g. Island north shore"></div>
+        <div class="field"><label for="sDate">Date</label><input id="sDate" type="date"></div>
+        <div class="field"><label for="sLen">Shoreline surveyed (metres)</label><input id="sLen" type="number" min="1" inputmode="numeric" placeholder="50"></div>
+        <div class="field full"><label for="sRec">Recorder(s)</label><input id="sRec" autocomplete="off" placeholder="Names"></div>
+      </div>
+      <p class="small muted" id="saveState" role="status"></p>
+    </div>
+    <div class="card">
+      <h3>Start a new survey</h3>
+      <p class="sub">Clears every item on this device, including example data and other teams' results.</p>
+      <div class="row"><button class="btn danger" id="newSurvey">Start new survey</button></div>
+    </div>
+    <div class="card">
+      <h3>Backup and restore</h3>
+      <p class="sub">The log lives in this browser only. Copy the backup code to a message or note as you go.</p>
+      <div class="row"><button class="btn small" id="copyBackup">Copy backup code</button><span class="small muted" id="backupMsg"></span></div>
+      <textarea class="code" id="restoreCode" aria-label="Paste a backup code to restore" placeholder="Paste a backup code to restore this device's log"></textarea>
+      <div class="row"><button class="btn small" id="restoreBtn">Restore from code</button><span class="small muted" id="restoreMsg" role="status"></span></div>
+    </div>
+    <div class="card">
+      <h3>Before you go out</h3>
+      <ul class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">
+        <li>One phone or tablet per team. Open this page once while you have signal; logging works without it.</li>
+        <li>Glass, syringes and sharp metal are logged from sight. Only staff pick them up.</li>
+        <li>Log items larger than 2.5 cm. Smaller pieces go in the microplastics sample.</li>
+        <li>Driftwood and shells are natural, so don't log them. Processed wood counts.</li>
+        <li>If you can't tell what an item is, log it as Other and describe it in Notes.</li>
+      </ul>
+    </div>
+    <p class="foot">Material categories based on the NOAA Marine Debris Monitoring and Assessment Project. DANAT Blue Science &amp; Sustainability Camp.</p>
+  </section>
+</main>
+
+<div class="toast" id="toast" hidden role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+<div class="modal-back" id="modalBack" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle"></h3>
+    <p id="modalBody"></p>
+    <div class="row"><button class="btn small" id="modalCancel">Cancel</button><button class="btn small primary" id="modalOk">OK</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const MATERIALS = [
+  {k:"plastic", name:"Plastic", c:"--m-plastic", items:["Hard fragment","Foam fragment","Film fragment","Bottle","Bottle cap","Bag","Food wrapper","Cup or lid","Straw or utensil","Cigarette butt","Rope or net piece","Fishing line or lure","Other plastic"]},
+  {k:"metal", name:"Metal", c:"--m-metal", items:["Drink can","Aerosol can","Bottle cap or tab","Foil","Fishing hook or weight","Metal fragment","Other metal"]},
+  {k:"glass", name:"Glass", c:"--m-glass", items:["Bottle","Jar","Glass fragment","Other glass"]},
+  {k:"rubber", name:"Rubber", c:"--m-rubber", items:["Flip-flop","Glove","Tyre","Balloon","Rubber fragment","Other rubber"]},
+  {k:"wood", name:"Processed wood", c:"--m-wood", items:["Plank or timber","Pallet or crate","Other processed wood"]},
+  {k:"fabric", name:"Cloth/fabric", c:"--m-fabric", items:["Clothing or shoe","Towel or rag","Natural rope or net","Fabric fragment","Other fabric"]},
+  {k:"other", name:"Other", c:"--m-other", items:["Paper or cardboard","Ceramic","Mixed materials","Unknown item"]}
+];
+const SOURCES = [
+  {k:"beach", name:"Beach-goers", hint:"Picnics, drinks, snacks, smoking"},
+  {k:"fishing", name:"Fishing", hint:"Nets, line, gargoor traps, floats"},
+  {k:"shipping", name:"Shipping", hint:"Foreign packaging, oil containers, crates"},
+  {k:"runoff", name:"Land runoff", hint:"Bags, building waste, drains"},
+  {k:"unknown", name:"Unknown", hint:"Too worn to tell"}
+];
+const MAT = Object.fromEntries(MATERIALS.map(m=>[m.k,m]));
+const SRC = Object.fromEntries(SOURCES.map(s=>[s.k,s]));
+const TEAM_COLORS = ["--t1","--t2","--t3","--t4"];
+const KEY = "litter-detectives-v1";
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const cv = name => "var("+name+")";
+function todayLocal(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function hhmm(t){const d=new Date(t);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+
+/* ---------- example data, clearly marked ---------- */
+function makeDemo(){
+  let seed = 7;
+  const rnd = () => (seed = (seed*9301+49297)%233280)/233280;
+  const pick = arr => arr[Math.floor(rnd()*arr.length)];
+  const plan = [
+    ["plastic","Bottle cap","beach",6],["plastic","Bottle","beach",5],["plastic","Hard fragment","unknown",7],
+    ["plastic","Foam fragment","unknown",4],["plastic","Food wrapper","beach",4],["plastic","Bag","runoff",3],
+    ["plastic","Cigarette butt","beach",5],["plastic","Rope or net piece","fishing",3],["plastic","Fishing line or lure","fishing",2],
+    ["metal","Drink can","beach",3],["glass","Glass fragment","unknown",2],["rubber","Flip-flop","beach",1],
+    ["wood","Pallet or crate","shipping",1],["fabric","Towel or rag","beach",1],["other","Paper or cardboard","runoff",2]
+  ];
+  const brands = ["Al Ain","Masafi","Pepsi","Coca-Cola","Mai Dubai",""];
+  const countries = ["UAE","UAE","Bahrain","Saudi Arabia","UAE",""];
+  const items = []; let t = Date.now() - 95*60000;
+  plan.forEach(([m,i,s,n])=>{for(let x=0;x<n;x++){
+    t += Math.floor(rnd()*120000)+30000;
+    let b="",c="";
+    if(i==="Bottle"||i==="Bottle cap"||i==="Drink can"){const j=Math.floor(rnd()*brands.length);b=brands[j];c=countries[j];}
+    items.push({id:uid(),t,m,i,s,b,c,p:"",n:""});
+  }});
+  items.sort((a,b)=>a.t-b.t);
+  const other = [];
+  const plan2 = [["plastic","Hard fragment","unknown",9],["plastic","Rope or net piece","fishing",6],["plastic","Fishing line or lure","fishing",4],
+    ["plastic","Bottle","beach",3],["plastic","Film fragment","unknown",5],["metal","Aerosol can","shipping",1],["rubber","Glove","fishing",2],
+    ["other","Unknown item","unknown",2],["wood","Plank or timber","shipping",2]];
+  let t2 = Date.now()-90*60000;
+  plan2.forEach(([m,i,s,n])=>{for(let x=0;x<n;x++){t2+=60000;other.push({id:uid(),t:t2,m,i,s,b:"",c:"",p:"",n:""});}});
+  return {
+    demo:true,
+    survey:{id:"demo-a",team:"Team A (example)",site:"Example beach",date:todayLocal(),length:50,recorder:""},
+    items,
+    others:[{id:"demo-b",team:"Team B (example)",site:"Example mangrove edge",date:todayLocal(),length:50,items:other}]
+  };
+}
+function freshState(){return {demo:false,survey:{id:uid(),team:"Team A",site:"",date:todayLocal(),length:50,recorder:""},items:[],others:[]};}
+
+/* ---------- storage ---------- */
+let storageOK = true;
+function load(){
+  try{const raw=localStorage.getItem(KEY); if(raw){const s=JSON.parse(raw); if(s&&s.survey&&Array.isArray(s.items)){s.others=s.others||[];return s;}}}
+  catch(e){storageOK=false;}
+  return makeDemo();
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(state));storageOK=true;}
+  catch(e){storageOK=false;}
+  $("storageBanner").hidden = storageOK;
+}
+let state = load();
+const sel = {m:null,i:null,s:null};
+let undoFn = null, toastTimer = null;
+
+/* ---------- share codes ---------- */
+function encode(survey,items){
+  const payload={v:1,id:survey.id,team:survey.team,site:survey.site,date:survey.date,length:survey.length,
+    items:items.map(x=>[x.t,x.m,x.i,x.s,x.b||"",x.c||"",x.p||"",x.n||""])};
+  return "LD1:"+btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+function decode(code){
+  const s=String(code||"").replace(/\s+/g,"");
+  if(!s.startsWith("LD1:")) throw new Error("That doesn't look like a Litter Detectives code. Codes start with LD1:");
+  let p;
+  try{p=JSON.parse(decodeURIComponent(escape(atob(s.slice(4)))));}catch(e){throw new Error("The code is incomplete. Copy it again in full and paste it here.");}
+  if(!p||p.v!==1||!Array.isArray(p.items)) throw new Error("The code is incomplete. Copy it again in full and paste it here.");
+  const items=p.items.filter(a=>Array.isArray(a)&&MAT[a[1]]&&SRC[a[3]]).map(a=>({id:uid(),t:+a[0]||Date.now(),m:a[1],i:String(a[2]||""),s:a[3],b:String(a[4]||""),c:String(a[5]||""),p:String(a[6]||""),n:String(a[7]||"")}));
+  return {id:String(p.id||uid()),team:String(p.team||"Unnamed team"),site:String(p.site||""),date:String(p.date||""),length:+p.length||0,items};
+}
+
+/* ---------- stats ---------- */
+function countBy(items,fn){const o={};items.forEach(x=>{const k=fn(x);if(k!==null&&k!==undefined&&k!=="")o[k]=(o[k]||0)+1;});return o;}
+function topEntry(obj){let best=null;for(const k in obj){if(!best||obj[k]>best[1])best=[k,obj[k]];}return best;}
+
+function barsHTML(rows,denom,opts){
+  opts=opts||{};
+  const max=Math.max(1,...rows.map(r=>r.v));
+  if(!rows.length) return '<p class="empty-note">Nothing logged yet.</p>';
+  return rows.map(r=>{
+    const w = opts.pct ? (denom? r.v/denom*100 : 0) : r.v/max*100;
+    const pct = denom? Math.round(r.v/denom*100) : 0;
+    return '<div class="bar-row"><span>'+esc(r.label)+'</span><span class="bar-track"><span class="bar-fill" style="width:'+w.toFixed(1)+'%;background:'+cv(r.c)+'"></span></span><span class="bar-val num"><b>'+r.v+'</b> · '+pct+'%</span></div>';
+  }).join("");
+}
+
+/* ---------- rendering ---------- */
+function renderHeader(){
+  const s=state.survey;
+  $("surveyChip").innerHTML='<strong class="num">'+state.items.length+' items</strong>'+esc(s.team||"Team")+(s.site?' · '+esc(s.site):'');
+  $("demoBanner").hidden=!state.demo;
+  $("storageBanner").hidden=storageOK;
+}
+
+function renderLog(){
+  const counts=countBy(state.items,x=>x.m);
+  $("matGrid").innerHTML=MATERIALS.map(m=>'<button class="tile" data-m="'+m.k+'" aria-pressed="'+(sel.m===m.k)+'"><span class="sw" style="background:'+cv(m.c)+'"></span>'+esc(m.name)+'<span class="ct num">'+(counts[m.k]||0)+'</span></button>').join("");
+  if(!sel.m){$("itemChips").innerHTML='<p class="empty-note">Choose a material first.</p>';}
+  else{$("itemChips").innerHTML=MAT[sel.m].items.map(i=>'<button class="chip" data-i="'+esc(i)+'" aria-pressed="'+(sel.i===i)+'">'+esc(i)+'</button>').join("");}
+  $("srcGrid").innerHTML=SOURCES.map(s=>'<button class="src" data-s="'+s.k+'" aria-pressed="'+(sel.s===s.k)+'"><b>'+esc(s.name)+'</b><small>'+esc(s.hint)+'</small></button>').join("");
+  const ready=sel.m&&sel.i&&sel.s;
+  $("logBtn").disabled=!ready;
+  const parts=[];
+  if(sel.i)parts.push('<b>'+esc(sel.i)+'</b> ('+esc(MAT[sel.m].name)+')'); else if(sel.m) parts.push('<b>'+esc(MAT[sel.m].name)+'</b>: pick the item');
+  if(sel.s)parts.push('from <b>'+esc(SRC[sel.s].name)+'</b>');
+  $("selSummary").innerHTML=parts.length?parts.join(' '):'Tap a material, an item and a source, then log it.';
+  $("repeatBtn").disabled=!state.items.length;
+  const recent=state.items.slice(-5).reverse();
+  $("recentList").innerHTML=recent.length?recent.map(itemRow).join(""):'<p class="empty-note">Nothing logged yet. Your first item will appear here.</p>';
+}
+
+function itemRow(x){
+  const m=MAT[x.m], s=SRC[x.s];
+  const extra=[x.b,x.c,x.p?("photo "+x.p):"",x.n].filter(Boolean).map(esc).join(" · ");
+  return '<div class="log-item"><span class="sw" style="background:'+cv(m.c)+'"></span><div><div><b>'+esc(x.i)+'</b> · '+esc(m.name)+'</div><div class="meta num">'+hhmm(x.t)+' · '+esc(s.name)+(extra?' · '+extra:'')+'</div></div><button class="iconbtn" data-del="'+esc(x.id)+'" aria-label="Remove '+esc(x.i)+' logged at '+hhmm(x.t)+'">✕</button></div>';
+}
+
+function renderTally(){
+  const items=state.items, n=items.length, len=+state.survey.length||0;
+  const byM=countBy(items,x=>x.m), byS=countBy(items,x=>x.s), byI=countBy(items,x=>x.i+" ("+MAT[x.m].name+")");
+  const topS=topEntry(byS);
+  const plasticPct=n?Math.round((byM.plastic||0)/n*100):0;
+  $("tallyTiles").innerHTML=
+    stat(n,"items logged")+
+    stat(len&&n?(n/len*100).toFixed(0):"–","items per 100 m of shore")+
+    stat(n?plasticPct+"%":"–","made of plastic")+
+    stat(topS?esc(SRC[topS[0]].name):"–","top likely source",true);
+  $("matBars").innerHTML=barsHTML(MATERIALS.map(m=>({label:m.name,v:byM[m.k]||0,c:m.c})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v),n);
+  $("srcBars").innerHTML=barsHTML(SOURCES.map(s=>({label:s.name,v:byS[s.k]||0,c:"--sea"})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v),n);
+  const itemRows=Object.entries(byI).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>{const mk=items.find(x=>(x.i+" ("+MAT[x.m].name+")")===k).m;return {label:k,v,c:MAT[mk].c};});
+  $("itemBars").innerHTML=barsHTML(itemRows,n);
+  const brandMap={};
+  items.forEach(x=>{const b=(x.b||"").trim(); if(!b)return; const key=b.toLowerCase(); if(!brandMap[key])brandMap[key]={name:b,count:0,countries:new Set()}; brandMap[key].count++; if(x.c&&x.c.trim())brandMap[key].countries.add(x.c.trim());});
+  const brands=Object.values(brandMap).sort((a,b)=>b.count-a.count);
+  $("brandTable").innerHTML=brands.length?'<table><thead><tr><th>Brand</th><th>Country of origin</th><th class="r">Items</th></tr></thead><tbody>'+brands.map(b=>'<tr><td>'+esc(b.name)+'</td><td>'+esc([...b.countries].join(", ")||"–")+'</td><td class="r num">'+b.count+'</td></tr>').join("")+'</tbody></table>':'<p class="empty-note">No brands recorded yet. Add them under "Brand, country and notes" when you log an item.</p>';
+  $("fullList").innerHTML=n?items.slice().reverse().map(itemRow).join(""):'<p class="empty-note">Nothing logged yet.</p>';
+}
+function stat(v,l,isText){return '<div class="stat"><div class="v num'+(isText?' text':'')+'">'+v+'</div><div class="l">'+esc(l)+'</div></div>';}
+
+function datasets(){
+  const own={id:state.survey.id,team:state.survey.team||"My team",site:state.survey.site,length:state.survey.length,items:state.items,own:true};
+  return [own].concat(state.others);
+}
+
+function renderCompare(){
+  $("myCode").value=encode(state.survey,state.items);
+  const ds=datasets();
+  $("dsList").innerHTML=ds.map((d,ix)=>'<div class="ds"><i style="background:'+cv(TEAM_COLORS[ix%4])+'"></i><span class="grow"><b>'+esc(d.team)+'</b>'+(d.site?' · '+esc(d.site):'')+' · <span class="num">'+d.items.length+'</span> items'+(d.own?' <span class="muted">(this device)</span>':'')+'</span>'+(d.own?'':'<button class="iconbtn" data-rmds="'+esc(d.id)+'" aria-label="Remove '+esc(d.team)+'">✕</button>')+'</div>').join("");
+  const all=[].concat(...ds.map(d=>d.items));
+  const byM=countBy(all,x=>x.m), byS=countBy(all,x=>x.s), byI=countBy(all,x=>x.i);
+  const tm=topEntry(byM), ts=topEntry(byS), ti=topEntry(byI);
+  $("cmpTiles").innerHTML=stat(all.length,"items, all teams")+stat(tm?esc(MAT[tm[0]].name):"–","most common material",true)+stat(ts?esc(SRC[ts[0]].name):"–","most common source",true)+stat(ti?esc(ti[0]):"–","most common item",true);
+  const legend=ds.map((d,ix)=>'<span><i style="background:'+cv(TEAM_COLORS[ix%4])+'"></i>'+esc(d.team)+'</span>').join("");
+  $("cmpLegend1").innerHTML=legend; $("cmpLegend2").innerHTML=legend;
+  $("cmpMat").innerHTML=grouped(ds,MATERIALS.map(m=>({k:m.k,label:m.name})),x=>x.m);
+  $("cmpSrc").innerHTML=grouped(ds,SOURCES.map(s=>({k:s.k,label:s.name})),x=>x.s);
+  $("dlCsv").hidden=!(downloads||isTop);
+}
+function grouped(ds,cats,fn){
+  const counts=ds.map(d=>countBy(d.items,fn));
+  const shown=cats.filter(c=>counts.some(o=>o[c.k]));
+  if(!shown.length) return '<p class="empty-note">Nothing logged yet.</p>';
+  return shown.map(c=>'<div class="group"><div class="group-label">'+esc(c.label)+'</div>'+ds.map((d,ix)=>{
+    const v=counts[ix][c.k]||0, tot=d.items.length, pct=tot?v/tot*100:0;
+    return '<div class="bar-row"><span class="small muted">'+esc(d.team)+'</span><span class="bar-track"><span class="bar-fill" style="width:'+pct.toFixed(1)+'%;background:'+cv(TEAM_COLORS[ix%4])+'"></span></span><span class="bar-val num"><b>'+Math.round(pct)+'%</b> · '+v+'</span></div>';
+  }).join("")+'</div>').join("");
+}
+
+function renderSetup(){
+  const s=state.survey;
+  setVal("sTeam",s.team); setVal("sSite",s.site); setVal("sDate",s.date); setVal("sLen",s.length||""); setVal("sRec",s.recorder);
+  $("saveState").textContent=storageOK?"Saved on this device automatically.":"This browser isn't saving. Copy the backup code below often.";
+}
+function setVal(id,v){const el=$(id); if(document.activeElement!==el) el.value=v==null?"":v;}
+
+function renderAll(){renderHeader();renderLog();renderTally();renderCompare();renderSetup();}
+
+/* ---------- toast & modal ---------- */
+function toast(msg,undo){
+  $("toastMsg").textContent=msg; undoFn=undo||null; $("toastUndo").hidden=!undo; $("toast").hidden=false;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{$("toast").hidden=true;undoFn=null;},5000);
+}
+$("toastUndo").addEventListener("click",()=>{if(undoFn){undoFn();undoFn=null;} $("toast").hidden=true;});
+let modalOk=null;
+function confirmModal(title,body,okLabel,onOk){
+  $("modalTitle").textContent=title; $("modalBody").textContent=body; $("modalOk").textContent=okLabel; modalOk=onOk;
+  $("modalBack").hidden=false; $("modalCancel").focus();
+}
+function closeModal(){$("modalBack").hidden=true; modalOk=null;}
+$("modalCancel").addEventListener("click",closeModal);
+$("modalOk").addEventListener("click",()=>{const f=modalOk; closeModal(); if(f)f();});
+$("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("modalBack").hidden)closeModal();});
+
+/* ---------- tabs ---------- */
+function showView(v){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.view===v)));
+  document.querySelectorAll("section.view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));
+  window.scrollTo(0,0);
+}
+document.querySelector("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-view]"); if(b)showView(b.dataset.view);});
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]"); if(g)showView(g.dataset.go);});
+
+/* ---------- logging ---------- */
+$("matGrid").addEventListener("click",e=>{const b=e.target.closest("[data-m]"); if(!b)return; const k=b.dataset.m; if(sel.m!==k){sel.m=k;sel.i=null;} renderLog();});
+$("itemChips").addEventListener("click",e=>{const b=e.target.closest("[data-i]"); if(!b)return; sel.i=b.dataset.i; renderLog();});
+$("srcGrid").addEventListener("click",e=>{const b=e.target.closest("[data-s]"); if(!b)return; sel.s=b.dataset.s; renderLog();});
+
+function addItem(x){
+  state.items.push(x); save(); renderAll();
+  toast("Logged: "+x.i+" · "+SRC[x.s].name, ()=>{state.items=state.items.filter(y=>y.id!==x.id); save(); renderAll();});
+}
+$("logBtn").addEventListener("click",()=>{
+  if(!(sel.m&&sel.i&&sel.s))return;
+  addItem({id:uid(),t:Date.now(),m:sel.m,i:sel.i,s:sel.s,b:$("fBrand").value.trim(),c:$("fCountry").value.trim(),p:$("fPhoto").value.trim(),n:$("fNotes").value.trim()});
+  sel.i=null; sel.s=null; ["fBrand","fCountry","fPhoto","fNotes"].forEach(id=>$(id).value="");
+  renderLog();
+});
+$("repeatBtn").addEventListener("click",()=>{
+  const last=state.items[state.items.length-1]; if(!last)return;
+  addItem(Object.assign({},last,{id:uid(),t:Date.now(),p:"",n:""}));
+});
+document.addEventListener("click",e=>{
+  const d=e.target.closest("[data-del]"); if(!d)return;
+  const id=d.dataset.del, x=state.items.find(y=>y.id===id); if(!x)return;
+  const idx=state.items.indexOf(x);
+  state.items.splice(idx,1); save(); renderAll();
+  toast("Removed: "+x.i, ()=>{state.items.splice(idx,0,x); save(); renderAll();});
+});
+
+/* ---------- setup ---------- */
+[["sTeam","team"],["sSite","site"],["sDate","date"],["sLen","length"],["sRec","recorder"]].forEach(([id,key])=>{
+  $(id).addEventListener("input",()=>{let v=$(id).value; if(key==="length")v=+v||0; state.survey[key]=v; save(); renderHeader(); renderTally(); renderCompare(); $("saveState").textContent=storageOK?"Saved on this device automatically.":"This browser isn't saving. Copy the backup code below often.";});
+});
+$("newSurvey").addEventListener("click",()=>{
+  confirmModal("Start a new survey?","This removes all "+state.items.length+" items on this device and any other teams' results. Copy a backup code first if you need them.","Clear and start",()=>{
+    const keepTeam=state.demo?"Team A":(state.survey.team||"Team A");
+    state=freshState(); state.survey.team=keepTeam; sel.m=sel.i=sel.s=null; save(); renderAll(); showView("setup"); $("sSite").focus();
+  });
+});
+
+/* ---------- clipboard helpers ---------- */
+function copyText(text,textarea,msgEl){
+  const done=ok=>{msgEl.textContent=ok?"Copied.":"Select the text and copy it manually."; setTimeout(()=>{msgEl.textContent="";},3000);};
+  try{
+    navigator.clipboard.writeText(text).then(()=>done(true),()=>{if(textarea){textarea.focus();textarea.select();}done(false);});
+  }catch(e){if(textarea){textarea.focus();textarea.select();}done(false);}
+}
+$("copyMyCode").addEventListener("click",()=>copyText($("myCode").value,$("myCode"),$("copyMsg")));
+$("copyBackup").addEventListener("click",()=>{const code=encode(state.survey,state.items); $("restoreCode").value=code; copyText(code,$("restoreCode"),$("backupMsg"));});
+
+$("mergeBtn").addEventListener("click",()=>{
+  const msg=$("mergeMsg");
+  try{
+    const d=decode($("pasteCode").value);
+    if(d.id===state.survey.id){msg.textContent="That's this device's own code. Paste the other team's code instead.";return;}
+    const existing=state.others.findIndex(o=>o.id===d.id);
+    if(existing>=0) state.others[existing]=d; else state.others.push(d);
+    save(); renderAll(); $("pasteCode").value="";
+    msg.textContent=(existing>=0?"Updated ":"Added ")+d.team+": "+d.items.length+" items.";
+  }catch(e){msg.textContent=e.message;}
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-rmds]"); if(!b)return;
+  const d=state.others.find(o=>o.id===b.dataset.rmds); if(!d)return;
+  confirmModal("Remove "+d.team+"?","Their "+d.items.length+" items will be removed from this comparison. You can add them again with their code.","Remove",()=>{state.others=state.others.filter(o=>o.id!==d.id); save(); renderAll();});
+});
+$("restoreBtn").addEventListener("click",()=>{
+  const msg=$("restoreMsg");
+  let d; try{d=decode($("restoreCode").value);}catch(e){msg.textContent=e.message;return;}
+  confirmModal("Restore this log?","This replaces the "+state.items.length+" items on this device with "+d.items.length+" items from "+d.team+".","Restore",()=>{
+    state.demo=false; state.survey={id:d.id,team:d.team,site:d.site,date:d.date||todayLocal(),length:d.length||50,recorder:state.survey.recorder||""};
+    state.items=d.items; state.others=state.others.filter(o=>o.id!==d.id);
+    save(); renderAll(); msg.textContent="Restored "+d.items.length+" items.";
+  });
+});
+
+/* ---------- CSV export ---------- */
+function csv(){
+  const q=v=>{const s=String(v==null?"":v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const rows=[["team","site","date","shoreline_m","time","material","item","likely_source","brand","country","photo","notes"]];
+  datasets().forEach(d=>d.items.forEach(x=>rows.push([d.team,d.site,d.own?state.survey.date:d.date,d.length,hhmm(x.t),MAT[x.m].name,x.i,SRC[x.s].name,x.b,x.c,x.p,x.n])));
+  return rows.map(r=>r.map(q).join(",")).join("\n");
+}
+function csvName(){return "litter-detectives-"+(state.survey.date||todayLocal())+".csv";}
+let downloads=null; const isTop=(function(){try{return window.self===window.top;}catch(e){return false;}})();
+$("copyCsv").addEventListener("click",()=>copyText(csv(),null,$("csvMsg")));
+$("dlCsv").addEventListener("click",async()=>{
+  const data=csv(), msg=$("csvMsg");
+  if(downloads){
+    try{await downloads.save({filename:csvName(),data}); msg.textContent="Saved.";}
+    catch(e){msg.textContent="The download didn't go through. Use Copy CSV instead.";}
+    return;
+  }
+  try{
+    const url=URL.createObjectURL(new Blob([data],{type:"text/csv"}));
+    const a=document.createElement("a"); a.href=url; a.download=csvName(); document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000); msg.textContent="Downloading.";
+  }catch(e){msg.textContent="The download didn't go through. Use Copy CSV instead.";}
+});
+try{
+  if(window.claude&&typeof window.claude.use==="function"){
+    window.claude.use("downloads").then(d=>{downloads=d||null;renderCompare();}).catch(()=>{});
+  }
+}catch(e){}
+
+renderAll();
+})();
+</script>
+</body>
+</html>
